@@ -1,7 +1,9 @@
 import random
 
+max_attempts = 8
+
 secret = random.randint(1, 100)
-print('Компьютер загадал число от 1 до 100. Вам предстоит его угадать.')
+print(f'Компьютер загадал число от 1 до 100. Вам предстоит его угадать, используя не более {max_attempts} попыток.')
 attempt = 1
 
 gameOn = True
@@ -21,4 +23,7 @@ while gameOn:
     if userChoice > secret:
         print('Загаданное число меньше.')
     attempt = attempt + 1
+    if attempt > max_attempts:
+        print(f'Вы израсходовали все попытки. Было загадано число {secret}')
+        gameOn = False
 print('Игра окончена.')
