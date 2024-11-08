@@ -1,4 +1,6 @@
 a = ['Дима', 'Никита', 'Елисей', 'Богдан']
-print(a[1])
-print(a[3])
-print(a[-1])
+s = 'таракан'
+for i in s:
+    print(i)
+for i in range(2, 11, 4):
+    print(i)
