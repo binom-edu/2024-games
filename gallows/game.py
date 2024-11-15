@@ -80,20 +80,34 @@ def print_status():
 
 def get_user_input():
     '''Получает ход игрока с проверкой корректности'''
-    alf = 'аб'
-    pass
+    alf = 'абвгдеёжзийклмнопрстуфхцчшщъыь'
+    while True:
+        s = input('Введите букву: ').lower()
+        if len(s) != 1:
+            print('Нужно ввести ровно одну букву!')
+            continue # пропустить остальные команды и вернуться в начало цикла
+        if s not in alf:
+            print('Слово состоит только из русских букв.')
+            continue
+        if s in wrong or s in correct:
+            print('Эта буква уже использована!')
+            continue
+        return s
 
-def check_move():
+def check_move(s):
     '''Проверяет, отгадана ли буква'''
-    pass
+    return s in secret
 
 def check_win():
     '''Проверка победы игрока'''
-    pass
+    for s in secret:
+        if s not in correct:
+            return False
+    return True
 
 def check_lose():
     '''Проверка поражения игрока'''
-    pass
+    return len(wrong) == len(frames) - 1
 
 filedir = os.path.dirname(__file__)
 fin = open(os.path.join(filedir, 'words.txt'), 'r', encoding='utf8')
@@ -102,10 +116,22 @@ secret = random.choice(words)
 wrong = []
 correct = []
 
-# удалить после отладки
-secret = 'таракан'
-wrong = ['ш', 'б']
-correct = ['а', 'н']
-# удалить после отладки
+print('Вот тут вот правила игры')
 
-print_status()
+game_on = True
+while game_on:
+    print_status()
+    x = get_user_input()
+    if check_move(x):
+        print('Буква отгадана!')
+        correct.append(x)
+    else:
+        print('Такой буквы нет в слове.')
+        wrong.append(x)
+    if check_win():
+        print('Вы победили!')
+        game_on = False
+    if check_lose():
+        print('Вы проиграли! Было загадано слово', secret)
+        game_on = False
+        print(frames[-1])
