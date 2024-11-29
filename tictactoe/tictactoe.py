@@ -1,4 +1,4 @@
-import random
+import random, time
 
 def print_board(board: list) -> None:
     '''Печатает доску board'''
@@ -11,39 +11,80 @@ def print_board(board: list) -> None:
 def get_user_move(board: list) -> int:
     '''Получает ход игрока с проверкой корректности'''
     # Проверить корректность!
-    x = int(input('Ваш ход: '))
-    return x
+    while True:
+        x = input('Ваш ход: ')
+        if len(x) != 1:
+            print('Нужно ввести один символ - номер клетки')
+            continue
+        if not x.isdigit():
+            print('Ход должен быть цифрой - номером клетки')
+            continue
+        x = int(x)
+        if x < 1 or x > 9:
+            print('Номер клетки должен быть от 1 до 9')
+            continue
+        if board[x] != ' ':
+            print('Эта клетка уже занята')
+            continue
+        return x
 
 def get_computer_move(board: list) -> int:
     '''Получает ход компьютера'''
-    return random.randint(1, 9)
+    legal = []
+    for i in range(1, 10):
+        if board[i] == ' ':
+            legal.append(i)
+    return random.choice(legal)
 
 def check_win(board: list, tile: str) -> bool:
     '''Проверяет, победил ли игрок, играющий за tile'''
+    if board[1] == tile and board[4] == tile and board[7] == tile or \
+    board[2] == tile and board[5] == tile and board[8] == tile or \
+    board[3] == tile and board[6] == tile and board[9] == tile or \
+    board[1] == tile and board[2] == tile and board[3] == tile or \
+    board[4] == tile and board[5] == tile and board[6] == tile or \
+    board[7] == tile and board[8] == tile and board[9] == tile or \
+    board[1] == tile and board[5] == tile and board[9] == tile or \
+    board[7] == tile and board[5] == tile and board[3] == tile:
+        return True
     return False
 
 def check_draw(board: list) -> bool:
     '''Проверяет ничью'''
-    return False
+    return board.count(' ') == 1
 
 board = [' '] * 10
 
 game_on = True
-turn = 'компьютер'
+turn = random.choice(['компьютер', 'человек'])
+
+tiles = ['x', 'o']
+random.shuffle(tiles)
+user_tile, computer_tile = tiles
+print('Вы играете за', user_tile)
+swap = input('Обменять? (Yes / No) ')
+if swap.lower().startswith('y'):
+    user_tile, computer_tile = computer_tile, user_tile
+
 while game_on:
     print_board(board)
+    time.sleep(2)
     print('Ходит', turn)
     if turn == 'компьютер':
         move = get_computer_move(board)
-        board[move] = 'x'
+        board[move] = computer_tile
         turn = 'человек'
-        if check_win(board, 'x'):
+        if check_win(board, computer_tile):
             print('Компьютер выиграл.')
             game_on = False
     else:
         move = get_user_move(board)
-        board[move] = 'o'
+        board[move] = user_tile
         turn = 'компьютер'
-        if check_win(board, 'o'):
+        if check_win(board, user_tile):
             print('Человек выиграл.')
             game_on = False
+    if game_on and check_draw(board):
+        print('Ничья.')
+        game_on = False
+print_board(board)
