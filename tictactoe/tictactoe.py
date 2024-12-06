@@ -30,10 +30,36 @@ def get_user_move(board: list) -> int:
 
 def get_computer_move(board: list) -> int:
     '''Получает ход компьютера'''
-    legal = []
+    legal = [] # список свободных клеток
     for i in range(1, 10):
         if board[i] == ' ':
             legal.append(i)
+    # делаем выигрывающий ход, если он возможен
+    for x in legal:
+        bc = board.copy()
+        bc[x] = computer_tile
+        if check_win(bc, computer_tile):
+            return x
+    # делаем блокирующий ход, если человек может выиграть следующим ходом
+    if level > 1:
+        for x in legal:
+            bc = board.copy()
+            bc[x] = user_tile
+            if check_win(bc, user_tile):
+                return x
+    # делаем ход в центр, если он свободен
+    if level > 2:
+        if board[5] == ' ':
+            return 5
+    # делаем ход в угол, если можно
+    if level > 3:
+        corners = []
+        for i in 1, 3, 7, 9:
+            if board[i] == ' ':
+                corners.append(i)
+        if corners:
+            return random.choice(corners)
+    # выбираем из оставшихся клеток
     return random.choice(legal)
 
 def check_win(board: list, tile: str) -> bool:
@@ -57,6 +83,8 @@ board = [' '] * 10
 
 game_on = True
 turn = random.choice(['компьютер', 'человек'])
+
+level = int(input('Выберите уровень сложности (1-4): '))
 
 tiles = ['x', 'o']
 random.shuffle(tiles)
