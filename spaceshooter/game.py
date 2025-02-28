@@ -5,6 +5,7 @@ class Hero(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load(os.path.join(IMG_DIR, 'hero.png'))
         self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * 0.45)
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = SCENE_HEIGHT - 20
         all_sprites.add(self)
@@ -26,18 +27,22 @@ class Mob(pygame.sprite.Sprite):
         self.size = random.choice(['small', 'middle', 'big'])
         path = os.path.join(IMG_DIR, 'mobs', self.size)
         filenames = os.listdir(path)
-        self.image = pygame.image.load(
+        self.img = pygame.image.load(
             os.path.join(path, random.choice(filenames))
         ).convert_alpha()
+        self.image = self.img
         self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * 0.36)
         self.rect.center = (
             random.randint(-100, WIDTH + 100),
             random.randint(-400, -100)
         )
-        self.vx = random.randint(-2, 2)
+        self.vx = random.randint(-1, 1)
         self.vy = random.randint(1, 5)
         self.vr = random.randint(-3, 3)
         self.angle = 0
+        self.animation_rate = 100
+        self.last_update = pygame.time.get_ticks()
         all_sprites.add(self)
         mobs.add(self)
     
@@ -49,8 +54,14 @@ class Mob(pygame.sprite.Sprite):
                 random.randint(-100, WIDTH + 100),
                 random.randint(-400, -100)
             )
-        # self.angle = (self.angle + self.vr) % 360
-        # self.image = pygame.transform.rotate(self.image, self.angle)
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.animation_rate:
+            self.angle = (self.angle + self.vr) % 360
+            old_center = self.rect.center
+            self.image = pygame.transform.rotate(self.img, self.angle)
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+            self.last_update = now
 
 pygame.init()
 WIDTH = 480
@@ -69,7 +80,7 @@ scene = pygame.surface.Surface((WIDTH, SCENE_HEIGHT))
 all_sprites = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
 hero = Hero()
-for i in range(10):
+for i in range(5):
     Mob()
 
 clock = pygame.time.Clock()
@@ -83,6 +94,8 @@ while game_on:
             game_on = False
     # update
     all_sprites.update()
+    for mob in pygame.sprite.spritecollide(hero, mobs, True, pygame.sprite.collide_circle):
+        Mob()
     # render
     info.fill((0, 0, 100))
     scene.fill((0, 0, 0))
