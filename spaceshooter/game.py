@@ -63,6 +63,29 @@ class Mob(pygame.sprite.Sprite):
             self.rect.center = old_center
             self.last_update = now
 
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, coords, size):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.image = explosion_anim[size][0]
+        self.rect = self.image.get_rect()
+        self.rect.center = coords
+        self.frame = 0
+        self.last_update = pygame.time.get_ticks()
+        self.frame_rate = 100
+        all_sprites.add(self)
+
+    def update(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > self.frame_rate:
+            self.last_update = now
+            self.frame += 1
+            if self.frame == len(explosion_anim[self.size]):
+                self.kill()
+            else:
+                self.image = explosion_anim[self.size][self.frame]
+
+
 pygame.init()
 WIDTH = 480
 HEIGHT = 640
@@ -83,6 +106,15 @@ hero = Hero()
 for i in range(5):
     Mob()
 
+explosion_anim = {'sm': [], 'lg': [], 'player': []}
+for i in range(9):
+    filename = f'regularExplosion0{i}.png'
+    img = pygame.image.load(os.path.join(IMG_DIR, 'explosions', filename)).convert_alpha()
+    img_lg = pygame.transform.scale(img, (75, 75))
+    img_sm = pygame.transform.scale(img, (30, 30))
+    explosion_anim['lg'].append(img_lg)
+    explosion_anim['sm'].append(img_sm)
+
 clock = pygame.time.Clock()
 
 game_on = True
@@ -95,6 +127,7 @@ while game_on:
     # update
     all_sprites.update()
     for mob in pygame.sprite.spritecollide(hero, mobs, True, pygame.sprite.collide_circle):
+        expl = Explosion(mob.rect.center, 'sm')
         Mob()
     # render
     info.fill((0, 0, 100))
