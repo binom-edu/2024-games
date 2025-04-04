@@ -9,6 +9,9 @@ class Hero(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = SCENE_HEIGHT - 20
         all_sprites.add(self)
+        now = pygame.time.get_ticks()
+        self.last_shoot = now
+        self.shoot_delay = 1000
 
     def update(self):
         pressed = pygame.key.get_pressed()
@@ -20,6 +23,14 @@ class Hero(pygame.sprite.Sprite):
             self.rect.x -= 2
             if self.rect.left < 0:
                 self.rect.left = 0
+        if pressed[pygame.K_SPACE]:
+            self.shoot()
+    
+    def shoot(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_shoot > self.shoot_delay:
+            bullet = Bullet(self.rect.centerx, self.rect.top)
+            self.last_shoot = now
 
 class Mob(pygame.sprite.Sprite):
     def __init__(self):
@@ -35,7 +46,7 @@ class Mob(pygame.sprite.Sprite):
         self.radius = int(self.rect.width * 0.36)
         self.rect.center = (
             random.randint(-100, WIDTH + 100),
-            random.randint(-400, -100)
+            random.randint(-100, 0)
         )
         self.vx = random.randint(-1, 1)
         self.vy = random.randint(1, 5)
@@ -85,6 +96,21 @@ class Explosion(pygame.sprite.Sprite):
             else:
                 self.image = explosion_anim[self.size][self.frame]
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = bullet_img
+        self.rect = self.image.get_rect()
+        self.rect.centerx = x
+        self.rect.bottom = y
+        self.speed = -10
+        all_sprites.add(self)
+        bullets.add(self)
+
+    def update(self):
+        self.rect.y += self.speed
+        if self.rect.bottom < 0:
+            self.kill()
 
 pygame.init()
 WIDTH = 480
@@ -101,6 +127,7 @@ info = pygame.surface.Surface((WIDTH, INFO_HEIGHT))
 scene = pygame.surface.Surface((WIDTH, SCENE_HEIGHT))
 
 all_sprites = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 mobs = pygame.sprite.Group()
 hero = Hero()
 for i in range(5):
@@ -115,6 +142,8 @@ for i in range(9):
     explosion_anim['lg'].append(img_lg)
     explosion_anim['sm'].append(img_sm)
 
+bullet_img = pygame.image.load(os.path.join(IMG_DIR, 'bullet.png')).convert_alpha()
+
 clock = pygame.time.Clock()
 
 game_on = True
@@ -126,9 +155,17 @@ while game_on:
             game_on = False
     # update
     all_sprites.update()
+
+    # столкновение игрока с мобами
     for mob in pygame.sprite.spritecollide(hero, mobs, True, pygame.sprite.collide_circle):
         expl = Explosion(mob.rect.center, 'sm')
         Mob()
+    
+    # столкновение пули с мобами
+    for hit in pygame.sprite.groupcollide(mobs, bullets, True, True):
+        Explosion(hit.rect.center, 'lg')
+        Mob()
+    
     # render
     info.fill((0, 0, 100))
     scene.fill((0, 0, 0))
