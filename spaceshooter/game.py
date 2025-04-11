@@ -106,13 +106,22 @@ class Bullet(pygame.sprite.Sprite):
         self.speed = -10
         all_sprites.add(self)
         bullets.add(self)
+        bullet_snd.play()
 
     def update(self):
         self.rect.y += self.speed
         if self.rect.bottom < 0:
             self.kill()
 
+def draw_text(text, surf, x, y, size):
+    font = pygame.font.Font(font_name, size)
+    font_surf = font.render(text, True, (255, 255, 255))
+    text_rect = font_surf.get_rect()
+    text_rect.midtop = (x, y)
+    surf.blit(font_surf, text_rect)
+
 pygame.init()
+pygame.mixer.init()
 WIDTH = 480
 HEIGHT = 640
 INFO_HEIGHT = 50
@@ -120,6 +129,7 @@ SCENE_HEIGHT = HEIGHT - INFO_HEIGHT
 FPS = 60
 DIR = os.path.dirname(__file__)
 IMG_DIR = os.path.join(DIR, 'img')
+SND_DIR = os.path.join(DIR, 'snd')
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT), 0, 32)
 pygame.display.set_caption('Космический шутер')
@@ -144,8 +154,20 @@ for i in range(9):
 
 bullet_img = pygame.image.load(os.path.join(IMG_DIR, 'bullet.png')).convert_alpha()
 
+bullet_snd = pygame.mixer.Sound(os.path.join(SND_DIR, 'pew.wav'))
+expl_snd = []
+for file in 'expl3.wav', 'expl6.wav':
+    expl_snd.append(pygame.mixer.Sound(os.path.join(SND_DIR, file)))
+player_expl_snd = pygame.mixer.Sound(os.path.join(SND_DIR, 'rumble1.ogg'))
+pygame.mixer.music.load(os.path.join(SND_DIR, 'bgmusic.mp3'))
+pygame.mixer.music.set_volume(0.4)
+pygame.mixer.music.play(-1)
+
+font_name = pygame.font.match_font('arial')
+
 clock = pygame.time.Clock()
 
+score = 0
 game_on = True
 while game_on:
     # events
@@ -159,17 +181,21 @@ while game_on:
     # столкновение игрока с мобами
     for mob in pygame.sprite.spritecollide(hero, mobs, True, pygame.sprite.collide_circle):
         expl = Explosion(mob.rect.center, 'sm')
+        player_expl_snd.play()
         Mob()
     
     # столкновение пули с мобами
     for hit in pygame.sprite.groupcollide(mobs, bullets, True, True):
         Explosion(hit.rect.center, 'lg')
+        random.choice(expl_snd).play()
+        score += 50 - hit.radius
         Mob()
     
     # render
     info.fill((0, 0, 100))
     scene.fill((0, 0, 0))
     all_sprites.draw(scene)
+    draw_text(str(score), info, WIDTH // 2, 15, 25)
     screen.blit(info, (0, 0, WIDTH, INFO_HEIGHT))
     screen.blit(scene, (0, INFO_HEIGHT, WIDTH, HEIGHT))
     pygame.display.flip()
